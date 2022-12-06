@@ -11,13 +11,15 @@ import {
   Project,
 } from '../models';
 import {TaskRepository} from '../repositories';
+import { authenticate } from '@loopback/authentication';
 
 export class TaskProjectController {
   constructor(
     @repository(TaskRepository)
     public taskRepository: TaskRepository,
   ) { }
-
+  
+  @authenticate('jwt')
   @get('/tasks/{id}/project', {
     responses: {
       '200': {

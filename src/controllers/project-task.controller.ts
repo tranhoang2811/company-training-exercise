@@ -1,3 +1,4 @@
+import { authenticate } from '@loopback/authentication';
 import {
   Count,
   CountSchema,
@@ -25,7 +26,8 @@ export class ProjectTaskController {
   constructor(
     @repository(ProjectRepository) protected projectRepository: ProjectRepository,
   ) { }
-
+  
+  @authenticate('jwt')
   @get('/projects/{id}/tasks', {
     responses: {
       '200': {
@@ -45,6 +47,7 @@ export class ProjectTaskController {
     return this.projectRepository.tasks(id).find(filter);
   }
 
+  @authenticate('jwt')
   @post('/projects/{id}/tasks', {
     responses: {
       '200': {
@@ -70,6 +73,7 @@ export class ProjectTaskController {
     return this.projectRepository.tasks(id).create(task);
   }
 
+  @authenticate('jwt')
   @patch('/projects/{id}/tasks', {
     responses: {
       '200': {
@@ -93,6 +97,7 @@ export class ProjectTaskController {
     return this.projectRepository.tasks(id).patch(task, where);
   }
 
+  @authenticate('jwt')
   @del('/projects/{id}/tasks', {
     responses: {
       '200': {

@@ -19,6 +19,7 @@ import {
 } from '@loopback/rest';
 import {Project} from '../models';
 import {ProjectRepository} from '../repositories';
+import { authenticate } from '@loopback/authentication';
 
 export class ProjectController {
   constructor(
@@ -26,6 +27,7 @@ export class ProjectController {
     public projectRepository : ProjectRepository,
   ) {}
 
+  @authenticate('jwt')
   @post('/projects')
   @response(200, {
     description: 'Project model instance',
@@ -46,7 +48,8 @@ export class ProjectController {
   ): Promise<Project> {
     return this.projectRepository.create(project);
   }
-
+  
+  @authenticate('jwt')
   @get('/projects/count')
   @response(200, {
     description: 'Project model count',
@@ -58,6 +61,7 @@ export class ProjectController {
     return this.projectRepository.count(where);
   }
 
+  @authenticate('jwt')
   @get('/projects')
   @response(200, {
     description: 'Array of Project model instances',
@@ -76,6 +80,7 @@ export class ProjectController {
     return this.projectRepository.find(filter);
   }
 
+  @authenticate('jwt')
   @patch('/projects')
   @response(200, {
     description: 'Project PATCH success count',
@@ -95,6 +100,7 @@ export class ProjectController {
     return this.projectRepository.updateAll(project, where);
   }
 
+  @authenticate('jwt')
   @get('/projects/{id}')
   @response(200, {
     description: 'Project model instance',
@@ -111,6 +117,7 @@ export class ProjectController {
     return this.projectRepository.findById(id, filter);
   }
 
+  @authenticate('jwt')
   @patch('/projects/{id}')
   @response(204, {
     description: 'Project PATCH success',
@@ -129,6 +136,7 @@ export class ProjectController {
     await this.projectRepository.updateById(id, project);
   }
 
+  @authenticate('jwt')
   @put('/projects/{id}')
   @response(204, {
     description: 'Project PUT success',
@@ -140,6 +148,7 @@ export class ProjectController {
     await this.projectRepository.replaceById(id, project);
   }
 
+  @authenticate('jwt')
   @del('/projects/{id}')
   @response(204, {
     description: 'Project DELETE success',

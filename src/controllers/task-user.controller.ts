@@ -18,7 +18,7 @@ export class TaskUserController {
     public taskRepository: TaskRepository,
   ) { }
 
-  @get('/tasks/{id}/user', {
+  @get('/tasks/{id}/assignee', {
     responses: {
       '200': {
         description: 'User belonging to Task',
@@ -30,9 +30,45 @@ export class TaskUserController {
       },
     },
   })
-  async getUser(
+  async getAssignee(
     @param.path.string('id') id: typeof Task.prototype.id,
   ): Promise<User> {
-    return this.taskRepository.user(id);
+    return this.taskRepository.assignee(id);
+  }
+
+  @get('/tasks/{id}/creator', {
+    responses: {
+      '200': {
+        description: 'User belonging to Task',
+        content: {
+          'application/json': {
+            schema: {type: 'array', items: getModelSchemaRef(User)},
+          },
+        },
+      },
+    },
+  })
+  async getCreator(
+    @param.path.string('id') id: typeof Task.prototype.id,
+  ): Promise<User> {
+    return this.taskRepository.creator(id);
+  }
+
+  @get('/tasks/{id}/updater', {
+    responses: {
+      '200': {
+        description: 'User belonging to Task',
+        content: {
+          'application/json': {
+            schema: {type: 'array', items: getModelSchemaRef(User)},
+          },
+        },
+      },
+    },
+  })
+  async getUpdater(
+    @param.path.string('id') id: typeof Task.prototype.id,
+  ): Promise<User> {
+    return this.taskRepository.updater(id);
   }
 }

@@ -8,7 +8,6 @@ import {
 } from '@loopback/rest';
 import {
   Task,
-  Task,
 } from '../models';
 import {TaskRepository} from '../repositories';
 
@@ -18,7 +17,7 @@ export class TaskTaskController {
     public taskRepository: TaskRepository,
   ) { }
 
-  @get('/tasks/{id}/task', {
+  @get('/tasks/{id}/link', {
     responses: {
       '200': {
         description: 'Task belonging to Task',
@@ -33,6 +32,6 @@ export class TaskTaskController {
   async getTask(
     @param.path.string('id') id: typeof Task.prototype.id,
   ): Promise<Task> {
-    return this.taskRepository.task(id);
+    return this.taskRepository.link(id);
   }
 }
