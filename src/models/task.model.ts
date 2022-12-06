@@ -51,16 +51,16 @@ export class Task extends Entity {
   @belongsTo(() => Project)
   projectId: string;
 
-  @belongsTo(() => User, {name: 'assign'})
+  @belongsTo(() => User, {name: 'assignee'})
   assignedTo: string;
 
   @belongsTo(() => Task, {name: 'link'})
   linkedTo: string;
 
-  @belongsTo(() => User, {name: 'create'})
+  @belongsTo(() => User, {name: 'creator'})
   createdBy: string;
 
-  @belongsTo(() => User, {name: 'update'})
+  @belongsTo(() => User, {name: 'updater'})
   updatedBy: string;
 
   constructor(data?: Partial<Task>) {

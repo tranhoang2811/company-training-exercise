@@ -36,10 +36,10 @@ export class Project extends Entity {
   @hasMany(() => Task)
   tasks: Task[];
 
-  @belongsTo(() => User, {name: 'create'})
+  @belongsTo(() => User, {name: 'creator'})
   createdBy: User
 
-  @belongsTo(() => User, {name: 'update'})
+  @belongsTo(() => User, {name: 'updater'})
   updatedBy: User
 
   constructor(data?: Partial<Project>) {
