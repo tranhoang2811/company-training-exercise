@@ -20,15 +20,21 @@ import {
   Project,
   Task,
 } from '../models';
-import {ProjectRepository} from '../repositories';
+import {ProjectRepository, ProjectUserRepository} from '../repositories';
+import {inject} from '@loopback/core'
+import {SecurityBindings} from '@loopback/security'
+import { User } from '@loopback/authentication-jwt';
+import {taskValidator} from '../services'
+import { EUserRole } from '../constants';
 
 export class ProjectTaskController {
   constructor(
     @repository(ProjectRepository) protected projectRepository: ProjectRepository,
+    @repository(ProjectUserRepository) protected projectUserRepository: ProjectUserRepository,
   ) { }
   
   @authenticate('jwt')
-  @get('/projects/{id}/tasks', {
+  @get('/projects/{projectId}/tasks', {
     responses: {
       '200': {
         description: 'Array of Project has many Task',
@@ -41,14 +47,29 @@ export class ProjectTaskController {
     },
   })
   async find(
-    @param.path.string('id') id: string,
+    @inject(SecurityBindings.USER)
+    currentUserProfile: User,
+    @param.path.string('projectId') projectId: string,
     @param.query.object('filter') filter?: Filter<Task>,
   ): Promise<Task[]> {
-    return this.projectRepository.tasks(id).find(filter);
+    const validator = await taskValidator({
+      projectId: projectId,
+      userId: currentUserProfile.id,
+      projectUserRepository: this.projectUserRepository
+    })
+    if (validator.userRole.toString() !== EUserRole.ADMIN) {
+      filter = {
+        where: {
+          ...filter?.where,
+          assignedTo: currentUserProfile.id
+        }
+      }
+    }
+    return this.projectRepository.tasks(projectId).find(filter);
   }
 
   @authenticate('jwt')
-  @post('/projects/{id}/tasks', {
+  @post('/projects/{projectId}/tasks', {
     responses: {
       '200': {
         description: 'Project model instance',
@@ -57,7 +78,9 @@ export class ProjectTaskController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof Project.prototype.id,
+    @inject(SecurityBindings.USER)
+    currentUserProfile: User,
+    @param.path.string('projectId') projectId: string,
     @requestBody({
       content: {
         'application/json': {
@@ -70,11 +93,18 @@ export class ProjectTaskController {
       },
     }) task: Omit<Task, 'id'>,
   ): Promise<Task> {
-    return this.projectRepository.tasks(id).create(task);
+    const validator = await taskValidator({
+      projectId: projectId,
+      userId: currentUserProfile.id,
+      projectUserRepository: this.projectUserRepository
+    })
+    task.isCreatedByAdmin = validator.userRole.toString() === EUserRole.ADMIN
+    task.createdBy = currentUserProfile.id
+    return this.projectRepository.tasks(projectId).create(task);
   }
 
   @authenticate('jwt')
-  @patch('/projects/{id}/tasks', {
+  @patch('/projects/{projectId}/tasks/{taskId}', {
     responses: {
       '200': {
         description: 'Project.Task PATCH success count',
@@ -83,7 +113,10 @@ export class ProjectTaskController {
     },
   })
   async patch(
-    @param.path.string('id') id: string,
+    @inject(SecurityBindings.USER)
+    currentUserProfile: User,
+    @param.path.string('projectId') projectId: string,
+    @param.path.string('taskId') taskId: string,
     @requestBody({
       content: {
         'application/json': {
@@ -92,9 +125,15 @@ export class ProjectTaskController {
       },
     })
     task: Partial<Task>,
-    @param.query.object('where', getWhereSchemaFor(Task)) where?: Where<Task>,
   ): Promise<Count> {
-    return this.projectRepository.tasks(id).patch(task, where);
+    const validator = await taskValidator({
+      projectId: projectId,
+      userId: currentUserProfile.id,
+      projectUserRepository: this.projectUserRepository
+    })
+    const userRole = validator.userRole.toString()
+    console.log(task)
+    return this.projectRepository.tasks(projectId).patch(task);
   }
 
   @authenticate('jwt')

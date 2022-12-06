@@ -7,3 +7,4 @@ export * from './project-task.controller';
 export * from './project-user-project.controller';
 export * from './project-user-user.controller';
 export * from './project.controller';
+export * from './project-user.controller';
