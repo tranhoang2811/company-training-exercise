@@ -1,5 +1,5 @@
 import {Entity, model, property, belongsTo} from '@loopback/repository';
-import { EUserRole } from '../enums';
+import { EUserRole } from '../constants';
 import {Project} from './project.model';
 import {User} from './user.model';
 

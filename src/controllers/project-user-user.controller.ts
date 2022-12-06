@@ -11,6 +11,7 @@ import {
   User,
 } from '../models';
 import {ProjectUserRepository} from '../repositories';
+import { authenticate } from '@loopback/authentication';
 
 export class ProjectUserUserController {
   constructor(
@@ -18,6 +19,7 @@ export class ProjectUserUserController {
     public projectUserRepository: ProjectUserRepository,
   ) { }
 
+  @authenticate('jwt')
   @get('/project-users/{id}/user', {
     responses: {
       '200': {
