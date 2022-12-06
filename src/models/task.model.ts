@@ -1,7 +1,8 @@
 import {Entity, model, property} from '@loopback/repository';
+import { ETaskStatus } from '../enums';
 
 @model()
-export class User extends Entity {
+export class Task extends Entity {
   @property({
     type: 'string',
     id: true,
@@ -13,18 +14,27 @@ export class User extends Entity {
     type: 'string',
     required: true,
   })
-  email: string;
+  title: string;
 
   @property({
-    type: 'string',
+    type: 'boolean',
     required: true,
   })
-  password: string;
+  isCreatedByAdmin: boolean;
+
+  @property({
+    type: 'string',
+    default: ETaskStatus.NOT_ASSIGNED_YET,
+    jsonSchema: {
+      enum: Object.values(ETaskStatus)
+    }
+  })
+  status?: ETaskStatus;
 
   @property({
     type: 'string',
   })
-  name?: string;
+  description?: string;
 
   @property({
     type: 'date',
@@ -37,13 +47,13 @@ export class User extends Entity {
   updatedAt?: string;
 
 
-  constructor(data?: Partial<User>) {
+  constructor(data?: Partial<Task>) {
     super(data);
   }
 }
 
-export interface UserRelations {
+export interface TaskRelations {
   // describe navigational properties here
 }
 
-export type UserWithRelations = User & UserRelations;
+export type TaskWithRelations = Task & TaskRelations;

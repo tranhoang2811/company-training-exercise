@@ -36,18 +36,19 @@ entity User {
     -id: ObjectId <<generated>>
     --
     *email: String
+    *password: String
     name: String
     createdAt: Date
     updatedAt: Date
 }
 
-entity UserCredentials {
-    -id: ObjectId <<generated>>
-    --
-    ~userId: ObjectId
-    --
-    *password: String
-}
+' entity UserCredentials {
+'     -id: ObjectId <<generated>>
+'     --
+'     ~userId: ObjectId
+'     --
+'     *password: String
+' }
 
 entity ProjectUser {
     -id: ObjectId <<generated>>
@@ -74,7 +75,7 @@ Project ||--o{ ProjectUser
 User ||--o{ ProjectUser
 User ||--o{ Task
 User ||--o{ Project
-User ||--|| UserCredentials
+' User ||--|| UserCredentials
 
 
 EUserRole -- ProjectUser
