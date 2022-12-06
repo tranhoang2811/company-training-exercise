@@ -4,12 +4,7 @@ import {juggler} from '@loopback/repository';
 const config = {
   name: 'mongo',
   connector: 'mongodb',
-  url: '',
-  host: 'localhost',
-  port: 27017,
-  user: '',
-  password: '',
-  database: 'todo-training',
+  url: 'mongodb+srv://trandanghoang2811:vegitosuper17@todo-app.qolwtds.mongodb.net/training-exercise',
   useNewUrlParser: true
 };
 
