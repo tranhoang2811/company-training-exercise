@@ -1,0 +1,83 @@
+@startuml todoERD
+
+skinparam linetype ortho
+left to right direction
+
+entity Project {
+    -id: ObjectId <<generated>>
+    --
+    ~createdBy: ObjectId
+    ~updatedBy: ObjectId
+    --
+    *title: String
+    description: String
+    createdAt: Date
+    updatedAt: Date
+}
+
+entity Task {
+    -id: ObjectId <<generated>>
+    --
+    ~projectId: ObjectId
+    ~assignedTo: ObjectId
+    ~linkedTo: ObjectId
+    ~createdBy: ObjectId
+    ~updatedBy: ObjectId
+    --
+    *title: String
+    *isCreatedByAdmin: Boolean
+    status: ETaskStatus
+    description: String
+    createdAt: Date
+    updatedAt: Date
+}
+
+entity User {
+    -id: ObjectId <<generated>>
+    --
+    *email: String
+    name: String
+    createdAt: Date
+    updatedAt: Date
+}
+
+entity UserCredentials {
+    -id: ObjectId <<generated>>
+    --
+    ~userId: ObjectId
+    --
+    *password: String
+}
+
+entity ProjectUser {
+    -id: ObjectId <<generated>>
+    --
+    ~projectId: ObjectId
+    ~userId: ObjectId
+    --
+    *role: EUserRole
+}
+
+Enum EUserRole {
+    USER
+    ADMIN
+}
+
+Enum ETaskStatus {
+    NOT_ASSIGNED_YET
+    ON_PROGRESS
+    DONE
+}
+Task ||--o| Task
+Project ||--o{ Task
+Project ||--o{ ProjectUser
+User ||--o{ ProjectUser
+User ||--o{ Task
+User ||--o{ Project
+User ||--|| UserCredentials
+
+
+EUserRole -- ProjectUser
+ETaskStatus -- Task
+
+@enduml
