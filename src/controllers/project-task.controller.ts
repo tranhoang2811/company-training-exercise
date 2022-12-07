@@ -54,7 +54,7 @@ export class ProjectTaskController {
     @param.path.string('projectId') projectId: string,
     @param.query.object('filter') filter?: Filter<Task>,
   ): Promise<Task[]> {
-    const userRole = await validateUserProject({
+    const userRole: string = await validateUserProject({
       projectId: projectId,
       userId: currentUser?.id,
       projectUserRepository: this.projectUserRepository
@@ -94,7 +94,7 @@ export class ProjectTaskController {
       },
     }) task: Omit<Task, 'id'>,
   ): Promise<Task> {
-    const userRole = await validateUserProject({
+    const userRole: string = await validateUserProject({
       projectId: projectId,
       userId: currentUser?.id,
       projectUserRepository: this.projectUserRepository
@@ -126,14 +126,14 @@ export class ProjectTaskController {
     })
     newTask: Partial<Task>,
   ): Promise<Partial<Task>> {
-    const userRole = await validateUserProject({
+    const userRole: string = await validateUserProject({
       projectId: projectId,
       userId: currentUser.id,
       projectUserRepository: this.projectUserRepository
     })
-    const currentTask = await this.taskRepository.findById(taskId)
-    const isChangeAssignedTo = newTask?.assignedTo !== undefined && newTask?.assignedTo !== currentTask.assignedTo
-    const isChangeLinkedTo = newTask?.linkedTo !== undefined && newTask?.linkedTo !== currentTask.linkedTo
+    const currentTask: Task = await this.taskRepository.findById(taskId)
+    const isChangeAssignedTo: boolean = newTask?.assignedTo !== undefined && newTask?.assignedTo !== currentTask.assignedTo
+    const isChangeLinkedTo: boolean = newTask?.linkedTo !== undefined && newTask?.linkedTo !== currentTask.linkedTo
     if (userRole !== EUserRole.ADMIN && currentUser.id !== currentTask.assignedTo) {
       throw new HttpErrors.Unauthorized('You are not assigned to this task')
     }
@@ -170,7 +170,7 @@ export class ProjectTaskController {
     @param.path.string('taskId') taskId: string,
     @param.query.object('where', getWhereSchemaFor(Task)) where?: Where<Task>,
   ): Promise<void> {
-    const userRole = await validateUserProject({
+    const userRole: string = await validateUserProject({
       projectId: projectId,
       userId: currentUser.id,
       projectUserRepository: this.projectUserRepository
