@@ -16,8 +16,9 @@ import {
   del,
   requestBody,
   response,
+  HttpErrors,
 } from '@loopback/rest';
-import {Project} from '../models';
+import {Project, ProjectUser} from '../models';
 import {ProjectRepository, ProjectUserRepository} from '../repositories';
 import { authenticate } from '@loopback/authentication';
 import { EUserRole } from '../constants';
@@ -56,13 +57,48 @@ export class ProjectController {
     })
     project: Omit<Project, 'id'>,
   ): Promise<Project> {
-    const newProject = await this.projectRepository.create(project);
+    const newProject: Project = await this.projectRepository.create(project)
     await this.projectUserRepository.create({
       role: EUserRole.ADMIN,
       projectId: newProject.id,
       userId: currentUser.id
     })
-    return newProject
+    return newProject;
+  }
+
+  @post('/projects/{projectId}/project-users', {
+    responses: {
+      '200': {
+        description: 'Project model instance',
+        content: {'application/json': {schema: getModelSchemaRef(Project)}},
+      },
+    },
+  })
+  async assignUser(
+    @inject(SecurityBindings.USER)
+    currentUser: User,
+    @param.path.string('projectId') projectId: string,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(ProjectUser, {
+            title: 'AssignUserToProject',
+            exclude: ['id', 'projectId'],
+          }),
+        },
+      },
+    }) projectUser: Omit<ProjectUser, 'id'>,
+  ): Promise<ProjectUser> {
+    const userRole:string = await validateUserProject({
+      projectId: projectId,
+      userId: currentUser?.id,
+      projectUserRepository: this.projectUserRepository
+    })
+    if (userRole !== EUserRole.ADMIN) {
+      throw new HttpErrors.Unauthorized('You are not authorized to access this resource')
+    }
+    projectUser.projectId = projectId
+    return this.projectUserRepository.create(projectUser)
   }
   
   @get('/projects/count')
@@ -110,7 +146,6 @@ export class ProjectController {
     project: Project,
     @param.where(Project) where?: Where<Project>,
   ): Promise<Count> {
-    
     return this.projectRepository.updateAll(project, where);
   }
 
