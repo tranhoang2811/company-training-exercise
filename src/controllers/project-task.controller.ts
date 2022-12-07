@@ -11,6 +11,7 @@ import {
   get,
   getModelSchemaRef,
   getWhereSchemaFor,
+  HttpErrors,
   param,
   patch,
   post,
@@ -20,20 +21,21 @@ import {
   Project,
   Task,
 } from '../models';
-import {ProjectRepository, ProjectUserRepository} from '../repositories';
+import {ProjectRepository, ProjectUserRepository, TaskRepository} from '../repositories';
 import {inject} from '@loopback/core'
 import {SecurityBindings} from '@loopback/security'
 import { User } from '@loopback/authentication-jwt';
-import {taskValidator} from '../services'
-import { EUserRole } from '../constants';
+import {validateUserProject, validateTask} from '../services'
+import { EUserRole, ETaskStatus } from '../constants';
 
+@authenticate('jwt')
 export class ProjectTaskController {
   constructor(
     @repository(ProjectRepository) protected projectRepository: ProjectRepository,
     @repository(ProjectUserRepository) protected projectUserRepository: ProjectUserRepository,
+    @repository(TaskRepository) protected taskRepository: TaskRepository,
   ) { }
   
-  @authenticate('jwt')
   @get('/projects/{projectId}/tasks', {
     responses: {
       '200': {
@@ -48,27 +50,26 @@ export class ProjectTaskController {
   })
   async find(
     @inject(SecurityBindings.USER)
-    currentUserProfile: User,
+    currentUser: User,
     @param.path.string('projectId') projectId: string,
     @param.query.object('filter') filter?: Filter<Task>,
   ): Promise<Task[]> {
-    const validator = await taskValidator({
+    const userRole = await validateUserProject({
       projectId: projectId,
-      userId: currentUserProfile.id,
+      userId: currentUser?.id,
       projectUserRepository: this.projectUserRepository
     })
-    if (validator.userRole.toString() !== EUserRole.ADMIN) {
+    if (userRole !== EUserRole.ADMIN) {
       filter = {
         where: {
           ...filter?.where,
-          assignedTo: currentUserProfile.id
+          isCreatedByAdmin: false
         }
       }
     }
     return this.projectRepository.tasks(projectId).find(filter);
   }
 
-  @authenticate('jwt')
   @post('/projects/{projectId}/tasks', {
     responses: {
       '200': {
@@ -79,7 +80,7 @@ export class ProjectTaskController {
   })
   async create(
     @inject(SecurityBindings.USER)
-    currentUserProfile: User,
+    currentUser: User,
     @param.path.string('projectId') projectId: string,
     @requestBody({
       content: {
@@ -93,17 +94,16 @@ export class ProjectTaskController {
       },
     }) task: Omit<Task, 'id'>,
   ): Promise<Task> {
-    const validator = await taskValidator({
+    const userRole = await validateUserProject({
       projectId: projectId,
-      userId: currentUserProfile.id,
+      userId: currentUser?.id,
       projectUserRepository: this.projectUserRepository
     })
-    task.isCreatedByAdmin = validator.userRole.toString() === EUserRole.ADMIN
-    task.createdBy = currentUserProfile.id
+    task.isCreatedByAdmin = userRole === EUserRole.ADMIN
+    task.createdBy = currentUser?.id
     return this.projectRepository.tasks(projectId).create(task);
   }
 
-  @authenticate('jwt')
   @patch('/projects/{projectId}/tasks/{taskId}', {
     responses: {
       '200': {
@@ -114,7 +114,7 @@ export class ProjectTaskController {
   })
   async patch(
     @inject(SecurityBindings.USER)
-    currentUserProfile: User,
+    currentUser: User,
     @param.path.string('projectId') projectId: string,
     @param.path.string('taskId') taskId: string,
     @requestBody({
@@ -124,20 +124,38 @@ export class ProjectTaskController {
         },
       },
     })
-    task: Partial<Task>,
-  ): Promise<Count> {
-    const validator = await taskValidator({
+    newTask: Partial<Task>,
+  ): Promise<Partial<Task>> {
+    const userRole = await validateUserProject({
       projectId: projectId,
-      userId: currentUserProfile.id,
+      userId: currentUser.id,
       projectUserRepository: this.projectUserRepository
     })
-    const userRole = validator.userRole.toString()
-    console.log(task)
-    return this.projectRepository.tasks(projectId).patch(task);
+    const currentTask = await this.taskRepository.findById(taskId)
+    const isChangeAssignedTo = newTask?.assignedTo !== undefined && newTask?.assignedTo !== currentTask.assignedTo
+    const isChangeLinkedTo = newTask?.linkedTo !== undefined && newTask?.linkedTo !== currentTask.linkedTo
+    if (userRole !== EUserRole.ADMIN && currentUser.id !== currentTask.assignedTo) {
+      throw new HttpErrors.Unauthorized('You are not assigned to this task')
+    }
+    if (userRole !== EUserRole.ADMIN && (isChangeAssignedTo || isChangeLinkedTo)) {
+      throw new HttpErrors.Unauthorized('You are not authorized to access this resource')
+    }
+    if (isChangeAssignedTo && currentTask.status === ETaskStatus.NOT_ASSIGNED_YET) {
+      newTask.status = ETaskStatus.ON_PROGRESS
+    }
+    if (isChangeLinkedTo && newTask?.linkedTo !== undefined) {
+      await validateTask({
+        taskId: taskId,
+        linkedId: newTask.linkedTo?.toString(),
+        projectId: projectId,
+        taskRepository: this.taskRepository
+      })
+    }
+    await this.taskRepository.updateById(taskId, newTask)
+    return newTask;
   }
 
-  @authenticate('jwt')
-  @del('/projects/{id}/tasks', {
+  @del('/projects/{projectId}/tasks/{taskId}', {
     responses: {
       '200': {
         description: 'Project.Task DELETE success count',
@@ -146,9 +164,20 @@ export class ProjectTaskController {
     },
   })
   async delete(
-    @param.path.string('id') id: string,
+    @inject(SecurityBindings.USER)
+    currentUser: User,
+    @param.path.string('projectId') projectId: string,
+    @param.path.string('taskId') taskId: string,
     @param.query.object('where', getWhereSchemaFor(Task)) where?: Where<Task>,
-  ): Promise<Count> {
-    return this.projectRepository.tasks(id).delete(where);
+  ): Promise<void> {
+    const userRole = await validateUserProject({
+      projectId: projectId,
+      userId: currentUser.id,
+      projectUserRepository: this.projectUserRepository
+    })
+    if (userRole !== EUserRole.ADMIN) {
+      throw new HttpErrors.Unauthorized('You are not authorized to access this resource') 
+    }
+    this.taskRepository.deleteById(taskId);
   }
 }
