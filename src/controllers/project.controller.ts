@@ -18,22 +18,32 @@ import {
   response,
 } from '@loopback/rest';
 import {Project} from '../models';
-import {ProjectRepository} from '../repositories';
+import {ProjectRepository, ProjectUserRepository} from '../repositories';
 import { authenticate } from '@loopback/authentication';
+import { EUserRole } from '../constants';
+import {inject} from '@loopback/core'
+import {SecurityBindings} from '@loopback/security'
+import { User } from '@loopback/authentication-jwt';
+import { validateUserProject } from '../services';
 
+
+@authenticate('jwt')
 export class ProjectController {
   constructor(
     @repository(ProjectRepository)
     public projectRepository : ProjectRepository,
+    @repository(ProjectUserRepository)
+    public projectUserRepository : ProjectUserRepository,
   ) {}
 
-  @authenticate('jwt')
   @post('/projects')
   @response(200, {
     description: 'Project model instance',
     content: {'application/json': {schema: getModelSchemaRef(Project)}},
   })
   async create(
+    @inject(SecurityBindings.USER)
+    currentUser: User,
     @requestBody({
       content: {
         'application/json': {
@@ -46,10 +56,15 @@ export class ProjectController {
     })
     project: Omit<Project, 'id'>,
   ): Promise<Project> {
-    return this.projectRepository.create(project);
+    const newProject = await this.projectRepository.create(project);
+    await this.projectUserRepository.create({
+      role: EUserRole.ADMIN,
+      projectId: newProject.id,
+      userId: currentUser.id
+    })
+    return newProject
   }
   
-  @authenticate('jwt')
   @get('/projects/count')
   @response(200, {
     description: 'Project model count',
@@ -61,7 +76,6 @@ export class ProjectController {
     return this.projectRepository.count(where);
   }
 
-  @authenticate('jwt')
   @get('/projects')
   @response(200, {
     description: 'Array of Project model instances',
@@ -80,7 +94,6 @@ export class ProjectController {
     return this.projectRepository.find(filter);
   }
 
-  @authenticate('jwt')
   @patch('/projects')
   @response(200, {
     description: 'Project PATCH success count',
@@ -97,10 +110,10 @@ export class ProjectController {
     project: Project,
     @param.where(Project) where?: Where<Project>,
   ): Promise<Count> {
+    
     return this.projectRepository.updateAll(project, where);
   }
 
-  @authenticate('jwt')
   @get('/projects/{id}')
   @response(200, {
     description: 'Project model instance',
@@ -117,7 +130,6 @@ export class ProjectController {
     return this.projectRepository.findById(id, filter);
   }
 
-  @authenticate('jwt')
   @patch('/projects/{id}')
   @response(204, {
     description: 'Project PATCH success',
@@ -136,7 +148,6 @@ export class ProjectController {
     await this.projectRepository.updateById(id, project);
   }
 
-  @authenticate('jwt')
   @put('/projects/{id}')
   @response(204, {
     description: 'Project PUT success',
@@ -148,7 +159,6 @@ export class ProjectController {
     await this.projectRepository.replaceById(id, project);
   }
 
-  @authenticate('jwt')
   @del('/projects/{id}')
   @response(204, {
     description: 'Project DELETE success',
