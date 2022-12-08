@@ -26,7 +26,8 @@ export async function validateUserProject(userProjectValidationProps: UserProjec
     const {projectId, userId, projectUserRepository} = userProjectValidationProps
     const foundedProjectUser = await projectUserRepository.findOne({
         where: {
-            projectId: projectId
+            projectId: projectId,
+            userId: userId
         }
     })
 
