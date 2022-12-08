@@ -18,10 +18,14 @@ export class ProjectRepository extends DefaultCrudRepository<
 
   public readonly updater: BelongsToAccessor<User, typeof Project.prototype.id>;
 
+  public readonly projectUsers: HasManyRepositoryFactory<ProjectUser, typeof Project.prototype.id>;
+
   constructor(
     @inject('datasources.mongo') dataSource: MongoDataSource, @repository.getter('TaskRepository') protected taskRepositoryGetter: Getter<TaskRepository>, @repository.getter('UserRepository') protected userRepositoryGetter: Getter<UserRepository>, @repository.getter('ProjectUserRepository') protected projectUserRepositoryGetter: Getter<ProjectUserRepository>,
   ) {
     super(Project, dataSource);
+    this.projectUsers = this.createHasManyRepositoryFactoryFor('projectUsers', projectUserRepositoryGetter,);
+    this.registerInclusionResolver('projectUsers', this.projectUsers.inclusionResolver);
     this.tasks = this.createHasManyRepositoryFactoryFor('tasks', taskRepositoryGetter,);
     this.registerInclusionResolver('tasks', this.tasks.inclusionResolver);
     this.creator = this.createBelongsToAccessorFor('creator', userRepositoryGetter)

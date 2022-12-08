@@ -42,6 +42,9 @@ export class Project extends Entity {
   @belongsTo(() => User, {name: 'updater'})
   updatedBy: string
 
+  @hasMany(() => ProjectUser)
+  projectUsers: ProjectUser[];
+
   constructor(data?: Partial<Project>) {
     super(data);
   }
