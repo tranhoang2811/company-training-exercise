@@ -37,10 +37,10 @@ export class Project extends Entity {
   tasks: Task[];
 
   @belongsTo(() => User, {name: 'creator'})
-  createdBy: User
+  createdBy: string
 
   @belongsTo(() => User, {name: 'updater'})
-  updatedBy: User
+  updatedBy: string
 
   constructor(data?: Partial<Project>) {
     super(data);
