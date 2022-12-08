@@ -39,7 +39,7 @@ export class UserController {
         'application/json': {
           schema: getModelSchemaRef(User, {
             title: 'NewUser',
-            exclude: ['id'],
+            exclude: ['id', 'createdAt', 'updatedAt'],
           }),
         },
       },
@@ -122,7 +122,10 @@ export class UserController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(User, {partial: true}),
+          schema: getModelSchemaRef(User, {
+            exclude: ['id', 'createdAt', 'updatedAt'],
+            partial: true
+          }),
         },
       },
     })

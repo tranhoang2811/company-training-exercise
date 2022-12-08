@@ -127,7 +127,7 @@ export class ProjectTaskController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(Task, {
-            exclude: ['id'],
+            exclude: ['id', 'isCreatedByAdmin', 'createdAt', 'updatedAt', 'projectId', 'createdBy', 'updatedBy'],
             partial: true}),
         },
       },
