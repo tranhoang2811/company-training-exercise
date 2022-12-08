@@ -70,43 +70,6 @@ export class ProjectController {
     })
     return newProject;
   }
-
-  @post('/projects/{projectId}/project-users', {
-    responses: {
-      '200': {
-        description: 'Project model instance',
-        content: {'application/json': {schema: getModelSchemaRef(ProjectUser)}},
-      },
-    },
-  })
-  async assignUser(
-    @inject(SecurityBindings.USER)
-    currentUser: User,
-    @param.path.string('projectId') projectId: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(ProjectUser, {
-            title: 'AssignUserToProject',
-            exclude: ['id', 'projectId'],
-          }),
-        },
-      },
-    }) projectUser: Omit<ProjectUser, 'id'>,
-  ): Promise<ProjectUser> {
-    const userId = currentUser?.id
-    const userRole:string = await validateUserProject({
-      projectId: projectId,
-      userId: userId,
-      projectUserRepository: this.projectUserRepository
-    })
-    if (userRole !== EUserRole.ADMIN) {
-      throw new HttpErrors.Unauthorized('You are not authorized to access this resource')
-    }
-    // projectUser.projectId = projectId
-    set(projectUser, 'projectId', projectId)
-    return this.projectUserRepository.create(projectUser)
-  }
   
   @get('/projects/count')
   @response(200, {
