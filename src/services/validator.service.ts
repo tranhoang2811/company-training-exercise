@@ -52,10 +52,10 @@ export async function validateTask(taskValidationProps: TaskValidationProps): Pr
     if (!foundTask) {
         throw new HttpErrors.NotFound('Not found linked task')
     }
-    if (foundTask.projectId !== projectId) {
+    if (foundTask.projectId.toString() !== projectId) {
         throw new HttpErrors.Unauthorized('You can not link tasks between different projects')
     }
-    if (foundTask.id === taskId) {
+    if (foundTask.id?.toString() === taskId) {
         throw new HttpErrors.Unauthorized('You can not link task with it self')
     }
 }
