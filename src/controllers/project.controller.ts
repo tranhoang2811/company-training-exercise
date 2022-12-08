@@ -26,7 +26,7 @@ import {inject} from '@loopback/core'
 import {SecurityBindings} from '@loopback/security'
 import { User } from '@loopback/authentication-jwt';
 import { validateUserProject } from '../services';
-
+import set from 'lodash/set'
 
 @authenticate('jwt')
 export class ProjectController {
@@ -50,18 +50,23 @@ export class ProjectController {
         'application/json': {
           schema: getModelSchemaRef(Project, {
             title: 'NewProject',
-            exclude: ['id'],
+            exclude: ['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'],
           }),
         },
       },
     })
     project: Omit<Project, 'id'>,
   ): Promise<Project> {
-    const newProject: Project = await this.projectRepository.create(project)
+    const userId = currentUser?.id
+    set(project, 'createdBy', userId)
+    set(project, 'updatedBy', userId)
+    set(project, 'createdAt', new Date())
+    set(project, 'updatedAt', new Date())
+    const newProject = await this.projectRepository.create(project)
     await this.projectUserRepository.create({
       role: EUserRole.ADMIN,
       projectId: newProject.id,
-      userId: currentUser.id
+      userId: userId
     })
     return newProject;
   }
@@ -70,7 +75,7 @@ export class ProjectController {
     responses: {
       '200': {
         description: 'Project model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Project)}},
+        content: {'application/json': {schema: getModelSchemaRef(ProjectUser)}},
       },
     },
   })
@@ -89,15 +94,17 @@ export class ProjectController {
       },
     }) projectUser: Omit<ProjectUser, 'id'>,
   ): Promise<ProjectUser> {
+    const userId = currentUser?.id
     const userRole:string = await validateUserProject({
       projectId: projectId,
-      userId: currentUser?.id,
+      userId: userId,
       projectUserRepository: this.projectUserRepository
     })
     if (userRole !== EUserRole.ADMIN) {
       throw new HttpErrors.Unauthorized('You are not authorized to access this resource')
     }
-    projectUser.projectId = projectId
+    // projectUser.projectId = projectId
+    set(projectUser, 'projectId', projectId)
     return this.projectUserRepository.create(projectUser)
   }
   

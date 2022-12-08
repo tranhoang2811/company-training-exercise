@@ -27,6 +27,7 @@ import {SecurityBindings} from '@loopback/security'
 import { User } from '@loopback/authentication-jwt';
 import {validateUserProject, validateTask} from '../services'
 import { EUserRole, ETaskStatus } from '../constants';
+import set from 'lodash/set'
 
 @authenticate('jwt')
 export class ProjectTaskController {
@@ -87,20 +88,23 @@ export class ProjectTaskController {
         'application/json': {
           schema: getModelSchemaRef(Task, {
             title: 'NewTaskInProject',
-            exclude: ['id'],
-            optional: ['projectId']
+            exclude: ['id', 'projectId', 'assignedTo', 'linkedTo', 'createdBy', 'updatedBy', 'isCreatedByAdmin', 'status', 'createdAt', 'updatedAt'],
           }),
         },
       },
     }) task: Omit<Task, 'id'>,
   ): Promise<Task> {
+    const userId = currentUser?.id
     const userRole: string = await validateUserProject({
       projectId: projectId,
-      userId: currentUser?.id,
+      userId: userId,
       projectUserRepository: this.projectUserRepository
     })
-    task.isCreatedByAdmin = userRole === EUserRole.ADMIN
-    task.createdBy = currentUser?.id
+    set(task, 'isCreatedByAdmin', userRole === EUserRole.ADMIN)
+    set(task, 'createdBy', userId)
+    set(task, 'updatedBy', userId)
+    set(task, 'createdAt', new Date())
+    set(task, 'updatedAt', new Date())
     return this.projectRepository.tasks(projectId).create(task);
   }
 
@@ -108,7 +112,9 @@ export class ProjectTaskController {
     responses: {
       '200': {
         description: 'Project.Task PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: {'application/json': {schema: getModelSchemaRef(Task, {
+          exclude: ['id', 'projectId', 'isCreatedByAdmin', 'createdAt', 'updatedAt']
+        })}},
       },
     },
   })
@@ -120,15 +126,18 @@ export class ProjectTaskController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Task, {partial: true}),
+          schema: getModelSchemaRef(Task, {
+            exclude: ['id'],
+            partial: true}),
         },
       },
     })
     newTask: Partial<Task>,
   ): Promise<Partial<Task>> {
+    const userId = currentUser?.id
     const userRole: string = await validateUserProject({
       projectId: projectId,
-      userId: currentUser.id,
+      userId: userId,
       projectUserRepository: this.projectUserRepository
     })
     const currentTask: Task = await this.taskRepository.findById(taskId)
@@ -151,6 +160,8 @@ export class ProjectTaskController {
         taskRepository: this.taskRepository
       })
     }
+    set(newTask, 'updatedBy', userId)
+    set(newTask, 'updatedAt', new Date())
     await this.taskRepository.updateById(taskId, newTask)
     return newTask;
   }
