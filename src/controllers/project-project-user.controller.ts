@@ -27,7 +27,9 @@ import {ProjectRepository, ProjectUserRepository} from '../repositories';
 import { validateUserProject } from '../services';
 import set from 'lodash/set'
 import { User } from '@loopback/authentication-jwt';
+import {authenticate} from '@loopback/authentication'
 
+@authenticate('jwt')
 export class ProjectProjectUserController {
   constructor(
     @repository(ProjectRepository) protected projectRepository: ProjectRepository,
@@ -86,7 +88,6 @@ export class ProjectProjectUserController {
     if (userRole !== EUserRole.ADMIN) {
       throw new HttpErrors.Unauthorized('You are not authorized to access this resource')
     }
-    // projectUser.projectId = projectId
     set(projectUser, 'projectId', id)
     return this.projectUserRepository.create(projectUser)
   }

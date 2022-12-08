@@ -38,9 +38,9 @@ export class AuthController {
       '200': {
         description: 'User',
         content: {
-          schema: getJsonSchemaRef(User, {
-            exclude: ['id']
-          })
+          schema: {
+            'x-ts-type': User
+          }
         }
       }
     }
