@@ -71,8 +71,7 @@ export class ProjectProjectUserController {
         'application/json': {
           schema: getModelSchemaRef(ProjectUser, {
             title: 'NewProjectUserInProject',
-            exclude: ['id'],
-            optional: ['projectId']
+            exclude: ['id', 'projectId'],
           }),
         },
       },
@@ -106,7 +105,7 @@ export class ProjectProjectUserController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(ProjectUser, {
-            exclude: ['id'],
+            exclude: ['id', 'projectId'],
             partial: true
           }),
         },
