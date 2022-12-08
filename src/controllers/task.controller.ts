@@ -122,7 +122,10 @@ export class TaskController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Task, {partial: true}),
+          schema: getModelSchemaRef(Task, {
+            exclude: ['id', 'isCreatedByAdmin', 'createdAt', 'updatedAt', 'projectId', 'createdBy', 'updatedBy'],
+            partial: true
+          }),
         },
       },
     })
@@ -137,7 +140,15 @@ export class TaskController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() task: Task,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Task, {
+            exclude: ['id', 'isCreatedByAdmin', 'createdAt', 'updatedAt', 'projectId', 'createdBy', 'updatedBy'],
+            partial: true}),
+        },
+      },
+    }) task: Task,
   ): Promise<void> {
     await this.taskRepository.replaceById(id, task);
   }

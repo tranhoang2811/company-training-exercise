@@ -105,7 +105,10 @@ export class ProjectProjectUserController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(ProjectUser, {partial: true}),
+          schema: getModelSchemaRef(ProjectUser, {
+            exclude: ['id'],
+            partial: true
+          }),
         },
       },
     })
