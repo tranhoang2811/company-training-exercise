@@ -62,24 +62,24 @@ export class ProjectProjectUserController {
       },
     },
   })
-  async create(
+  async assignUser(
     @inject(SecurityBindings.USER)
     currentUser: User,
-    @param.path.string('projectId') projectId: string,
+    @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
           schema: getModelSchemaRef(ProjectUser, {
-            title: 'NewProjectUserInProject',
+            title: 'AssignUserToProject',
             exclude: ['id', 'projectId'],
           }),
         },
       },
     }) projectUser: Omit<ProjectUser, 'id'>,
   ): Promise<ProjectUser> {
-    const userId:string = currentUser?.id
+    const userId = currentUser?.id
     const userRole:string = await validateUserProject({
-      projectId: projectId,
+      projectId: id,
       userId: userId,
       projectUserRepository: this.projectUserRepository
     })
@@ -87,7 +87,7 @@ export class ProjectProjectUserController {
       throw new HttpErrors.Unauthorized('You are not authorized to access this resource')
     }
     // projectUser.projectId = projectId
-    set(projectUser, 'projectId', projectId)
+    set(projectUser, 'projectId', id)
     return this.projectUserRepository.create(projectUser)
   }
 
