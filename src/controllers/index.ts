@@ -11,3 +11,4 @@ export * from './project-user.controller';
 export * from './auth.controller';
 export * from './user.controller';
 export * from './project-project-user.controller';
+export * from './project-project-user.controller';
